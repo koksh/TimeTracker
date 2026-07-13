@@ -1,0 +1,62 @@
+{
+  "name": "time-tracker-vscode-extension",
+  "displayName": "Time Tracker",
+  "description": "Tracks active files and stores local activity events without requiring a backend.",
+  "version": "0.1.0",
+  "publisher": "local",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.125.0",
+    "typescript": "^5.7.0"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "timeTracker.openLogFile",
+        "title": "Time Tracker: Open Local Log File"
+      }
+    ],
+    "configuration": {
+      "title": "Time Tracker",
+      "properties": {
+        "timeTracker.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable time tracking"
+        },
+        "timeTracker.backendUrl": {
+          "type": "string",
+          "default": "",
+          "description": "HTTP endpoint that receives tracking events"
+        },
+        "timeTracker.intervalSeconds": {
+          "type": "number",
+          "default": 60,
+          "minimum": 10,
+          "description": "Heartbeat interval in seconds"
+        },
+        "timeTracker.token": {
+          "type": "string",
+          "default": "",
+          "description": "Optional bearer token for the backend"
+        },
+            "timeTracker.logFilePath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional override path for the local event log"
+        }
+      }
+    }
+  }
+}
