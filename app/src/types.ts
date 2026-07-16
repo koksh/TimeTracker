@@ -9,6 +9,7 @@ export interface TimeRecord {
   minutes: number;
   date: string;
   note?: string | undefined;
+  userId?: number | null;
 }
 
 export interface SmileState {

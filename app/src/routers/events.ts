@@ -1,8 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
 import type { TrackingEvent } from '../types.js';
 
-const events: TrackingEvent[] = [];
-
 const eventRoutes: FastifyPluginAsync = async (app) => {
   app.get('/',
   {
@@ -53,7 +51,46 @@ const eventRoutes: FastifyPluginAsync = async (app) => {
       },
     },
   },
-  async () => ({ count: events.length, events }));
+  async () => {
+    const result = await app.db.query<TrackingEvent & Record<string, any>>(`
+      SELECT
+        event,
+        timestamp,
+        elapsed_ms AS "elapsedMs",
+        active_time_ms AS "activeTimeMs",
+        file_path,
+        file_language,
+        file_name,
+        workspace_folder,
+        session_hostname,
+        session_user,
+        session_started_at
+      FROM events
+      ORDER BY id DESC
+    `);
+
+    const events = result.rows.map((row) => ({
+      event: row.event,
+      timestamp: row.timestamp,
+      elapsedMs: row.elapsedMs,
+      activeTimeMs: row.activeTimeMs,
+      file: row.file_path === null && row.file_language === null && row.file_name === null && row.workspace_folder === null
+        ? null
+        : {
+          path: row.file_path,
+          language: row.file_language,
+          fileName: row.file_name,
+          workspaceFolder: row.workspace_folder,
+        },
+      session: {
+        hostname: row.session_hostname,
+        user: row.session_user,
+        startedAt: row.session_started_at,
+      },
+    }));
+
+    return { count: events.length, events };
+  });
 
   app.post<{
     Body: TrackingEvent;
@@ -107,7 +144,33 @@ const eventRoutes: FastifyPluginAsync = async (app) => {
   },
   async (request, reply) => {
     const payload = request.body;
-    events.push(payload);
+    await app.db.query(`
+      INSERT INTO events (
+        event,
+        timestamp,
+        elapsed_ms,
+        active_time_ms,
+        file_path,
+        file_language,
+        file_name,
+        workspace_folder,
+        session_hostname,
+        session_user,
+        session_started_at
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+    `, [
+      payload.event,
+      payload.timestamp,
+      payload.elapsedMs,
+      payload.activeTimeMs,
+      payload.file?.path ?? null,
+      payload.file?.language ?? null,
+      payload.file?.fileName ?? null,
+      payload.file?.workspaceFolder ?? null,
+      payload.session.hostname,
+      payload.session.user,
+      payload.session.startedAt,
+    ]);
 
     reply.status(201);
     return { success: true, event: payload };

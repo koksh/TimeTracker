@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "publisher": "local",
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.90.0"
   },
   "activationEvents": [
     "onStartupFinished"
@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
-    "@types/vscode": "^1.125.0",
+    "@types/vscode": "^1.90.0",
     "typescript": "^5.7.0"
   },
   "contributes": {
@@ -51,7 +51,7 @@
           "default": "",
           "description": "Optional bearer token for the backend"
         },
-            "timeTracker.logFilePath": {
+        "timeTracker.logFilePath": {
           "type": "string",
           "default": "",
           "description": "Optional override path for the local event log"

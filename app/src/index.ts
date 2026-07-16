@@ -6,12 +6,14 @@ import smileRoutes from './routers/smile.js';
 import eventRoutes from './routers/events.js';
 import healthPlugin from './plugins/health.js';
 import dbPlugin from './plugins/db.js';
+import corsPlugin from './plugins/cors.js';
 import swaggerPlugin from './plugins/swagger.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = fastify({ logger: true });
-
+  
   await app.register(dbPlugin);
+  await app.register(corsPlugin);
   await app.register(swaggerPlugin);
   await app.register(healthPlugin);
   await app.register(eventRoutes, { prefix: '/events' });

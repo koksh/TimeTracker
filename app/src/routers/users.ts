@@ -1,9 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
 import type { User } from '../types.js';
 
-const users: User[] = [{ id: 1, username: 'Alice' }];
-let nextId = 2;
-
 const userRoutes: FastifyPluginAsync = async (app) => {
   app.get('/',
   {
@@ -24,7 +21,14 @@ const userRoutes: FastifyPluginAsync = async (app) => {
       },
     },
   },
-  async () => users);
+  async () => {
+    const result = await app.db.query<User>(`
+      SELECT id, username
+      FROM users
+      ORDER BY id
+    `);
+    return result.rows;
+  });
 
   app.get<{
     Params: { id: string };
@@ -57,14 +61,18 @@ const userRoutes: FastifyPluginAsync = async (app) => {
   },
   async (request, reply) => {
     const userId = Number(request.params.id);
-    const user = users.find((item) => item.id === userId);
+    const result = await app.db.query<User>(`
+      SELECT id, username
+      FROM users
+      WHERE id = $1
+    `, [userId]);
 
-    if (!user) {
+    if (result.rowCount === 0) {
       reply.status(404);
       return { error: 'User not found' };
     }
 
-    return user;
+    return result.rows[0];
   });
 
   app.post<{
@@ -95,13 +103,14 @@ const userRoutes: FastifyPluginAsync = async (app) => {
   },
   async (request, reply) => {
     const { username, password } = request.body;
-    const newUser: User = password === undefined
-      ? { id: nextId++, username }
-      : { id: nextId++, username, password };
-    users.push(newUser);
+    const result = await app.db.query<User>(`
+      INSERT INTO users (username, password)
+      VALUES ($1, $2)
+      RETURNING id, username
+    `, [username, password ?? null]);
 
     reply.status(201);
-    return newUser;
+    return result.rows[0];
   });
 
   app.put<{
@@ -144,15 +153,19 @@ const userRoutes: FastifyPluginAsync = async (app) => {
   async (request, reply) => {
     const userId = Number(request.params.id);
     const { username } = request.body;
-    const user = users.find((item) => item.id === userId);
+    const result = await app.db.query<User>(`
+      UPDATE users
+      SET username = $1
+      WHERE id = $2
+      RETURNING id, username
+    `, [username, userId]);
 
-    if (!user) {
+    if (result.rowCount === 0) {
       reply.status(404);
       return { error: 'User not found' };
     }
 
-    user.username = username;
-    return user;
+    return result.rows[0];
   });
 
   app.delete<{
@@ -182,15 +195,12 @@ const userRoutes: FastifyPluginAsync = async (app) => {
   },
   async (request, reply) => {
     const userId = Number(request.params.id);
-    const originalLength = users.length;
+    const result = await app.db.query(`
+      DELETE FROM users
+      WHERE id = $1
+    `, [userId]);
 
-    for (let index = users.length - 1; index >= 0; index -= 1) {
-      if (users[index]?.id === userId) {
-        users.splice(index, 1);
-      }
-    }
-
-    if (users.length === originalLength) {
+    if (result.rowCount === 0) {
       reply.status(404);
       return { error: 'User not found' };
     }
