@@ -18,10 +18,12 @@
     "@fastify/cors": "^10.0.0",
     "@fastify/swagger": "^9.8.0",
     "@fastify/swagger-ui": "^6.1.0",
+    "fastify-plugin": "^4.1.0",
     "pg": "^8.12.0"
   },
   "devDependencies": {
     "@types/node": "^26.1.0",
+    "@types/pg": "^8.10.0",
     "tsx": "^4.23.0",
     "typescript": "^6.0.3"
   }

@@ -1,11 +1,12 @@
+import fp from 'fastify-plugin';
 import type { FastifyPluginAsync } from 'fastify';
-import { Pool } from 'pg';
+import { Pool, type QueryResultRow } from 'pg';
 
 declare module 'fastify' {
   interface FastifyInstance {
     db: {
       pool: Pool;
-      query: <T = any>(text: string, params?: any[]) => Promise<import('pg').QueryResult<T>>;
+      query: <T extends QueryResultRow = QueryResultRow>(text: string, params?: any[]) => Promise<import('pg').QueryResult<T>>;
     };
   }
 }
@@ -21,7 +22,7 @@ const dbPlugin: FastifyPluginAsync = async (app) => {
 
   app.decorate('db', {
     pool,
-    query: async (text: string, params?: any[]) => pool.query(text, params),
+    query: async <T extends QueryResultRow = QueryResultRow>(text: string, params?: any[]) => pool.query<T>(text, params),
   });
 
   app.addHook('onClose', async () => {
@@ -50,7 +51,7 @@ const dbPlugin: FastifyPluginAsync = async (app) => {
     CREATE TABLE IF NOT EXISTS events (
       id SERIAL PRIMARY KEY,
       event TEXT NOT NULL,
-      timestamp TIMESTAMPTZ NOT NULL,
+      event_timestamp TIMESTAMPTZ NOT NULL,
       elapsed_ms INTEGER NOT NULL,
       active_time_ms INTEGER NOT NULL,
       file_path TEXT,
@@ -58,10 +59,10 @@ const dbPlugin: FastifyPluginAsync = async (app) => {
       file_name TEXT,
       workspace_folder TEXT,
       session_hostname TEXT NOT NULL,
-      session_user TEXT NOT NULL,
+      session_user_name TEXT NOT NULL,
       session_started_at TIMESTAMPTZ NOT NULL
     );
   `);
 };
 
-export default dbPlugin;
+export default fp(dbPlugin);

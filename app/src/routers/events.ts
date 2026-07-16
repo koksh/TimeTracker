@@ -52,10 +52,24 @@ const eventRoutes: FastifyPluginAsync = async (app) => {
     },
   },
   async () => {
-    const result = await app.db.query<TrackingEvent & Record<string, any>>(`
+    type EventRow = {
+      event: string;
+      timestamp: string;
+      elapsedMs: number;
+      activeTimeMs: number;
+      file_path: string | null;
+      file_language: string | null;
+      file_name: string | null;
+      workspace_folder: string | null;
+      session_hostname: string;
+      session_user_name: string;
+      session_started_at: string;
+    };
+
+    const result = await app.db.query<EventRow>(`
       SELECT
         event,
-        timestamp,
+        event_timestamp AS "timestamp",
         elapsed_ms AS "elapsedMs",
         active_time_ms AS "activeTimeMs",
         file_path,
@@ -63,7 +77,7 @@ const eventRoutes: FastifyPluginAsync = async (app) => {
         file_name,
         workspace_folder,
         session_hostname,
-        session_user,
+        session_user_name,
         session_started_at
       FROM events
       ORDER BY id DESC
@@ -84,7 +98,7 @@ const eventRoutes: FastifyPluginAsync = async (app) => {
         },
       session: {
         hostname: row.session_hostname,
-        user: row.session_user,
+        user: row.session_user_name,
         startedAt: row.session_started_at,
       },
     }));
@@ -147,7 +161,7 @@ const eventRoutes: FastifyPluginAsync = async (app) => {
     await app.db.query(`
       INSERT INTO events (
         event,
-        timestamp,
+        event_timestamp,
         elapsed_ms,
         active_time_ms,
         file_path,
@@ -155,7 +169,7 @@ const eventRoutes: FastifyPluginAsync = async (app) => {
         file_name,
         workspace_folder,
         session_hostname,
-        session_user,
+        session_user_name,
         session_started_at
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
     `, [
