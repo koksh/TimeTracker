@@ -22,12 +22,13 @@ const userRoutes: FastifyPluginAsync = async (app) => {
     },
   },
   async () => {
-    const result = await app.db.query<User>(`
-      SELECT id, username
-      FROM users
-      ORDER BY id
-    `);
-    return result.rows;
+    return app.prisma.user.findMany({
+      select: {
+        id: true,
+        username: true,
+      },
+      orderBy: { id: 'asc' },
+    });
   });
 
   app.get<{
@@ -61,18 +62,17 @@ const userRoutes: FastifyPluginAsync = async (app) => {
   },
   async (request, reply) => {
     const userId = Number(request.params.id);
-    const result = await app.db.query<User>(`
-      SELECT id, username
-      FROM users
-      WHERE id = $1
-    `, [userId]);
+    const user = await app.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, username: true },
+    });
 
-    if (result.rowCount === 0) {
+    if (!user) {
       reply.status(404);
       return { error: 'User not found' };
     }
 
-    return result.rows[0];
+    return user;
   });
 
   app.post<{
@@ -103,14 +103,19 @@ const userRoutes: FastifyPluginAsync = async (app) => {
   },
   async (request, reply) => {
     const { username, password } = request.body;
-    const result = await app.db.query<User>(`
-      INSERT INTO users (username, password)
-      VALUES ($1, $2)
-      RETURNING id, username
-    `, [username, password ?? null]);
+    const user = await app.prisma.user.create({
+      data: {
+        username,
+        password: password ?? null,
+      },
+      select: {
+        id: true,
+        username: true,
+      },
+    });
 
     reply.status(201);
-    return result.rows[0];
+    return user;
   });
 
   app.put<{
@@ -153,19 +158,19 @@ const userRoutes: FastifyPluginAsync = async (app) => {
   async (request, reply) => {
     const userId = Number(request.params.id);
     const { username } = request.body;
-    const result = await app.db.query<User>(`
-      UPDATE users
-      SET username = $1
-      WHERE id = $2
-      RETURNING id, username
-    `, [username, userId]);
 
-    if (result.rowCount === 0) {
+    const user = await app.prisma.user.update({
+      where: { id: userId },
+      data: { username },
+      select: { id: true, username: true },
+    }).catch(() => null);
+
+    if (!user) {
       reply.status(404);
       return { error: 'User not found' };
     }
 
-    return result.rows[0];
+    return user;
   });
 
   app.delete<{
@@ -195,12 +200,12 @@ const userRoutes: FastifyPluginAsync = async (app) => {
   },
   async (request, reply) => {
     const userId = Number(request.params.id);
-    const result = await app.db.query(`
-      DELETE FROM users
-      WHERE id = $1
-    `, [userId]);
 
-    if (result.rowCount === 0) {
+    const deleted = await app.prisma.user.delete({
+      where: { id: userId },
+    }).catch(() => null);
+
+    if (!deleted) {
       reply.status(404);
       return { error: 'User not found' };
     }

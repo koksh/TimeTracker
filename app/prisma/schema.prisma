@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int         @id @default(autoincrement())
+  username  String
+  password  String?
+  time      TimeRecord[]
+}
+
+model TimeRecord {
+  id      Int      @id @default(autoincrement())
+  minutes Int
+  date    DateTime
+  note    String?
+  userId  Int?
+  user    User?    @relation(fields: [userId], references: [id])
+}
+
+model Event {
+  id              Int     @id @default(autoincrement())
+  event           String
+  eventTimestamp  DateTime @map("event_timestamp")
+  elapsedMs       Int      @map("elapsed_ms")
+  activeTimeMs    Int      @map("active_time_ms")
+  filePath        String?  @map("file_path")
+  fileLanguage    String?  @map("file_language")
+  fileName        String?  @map("file_name")
+  workspaceFolder String?  @map("workspace_folder")
+  sessionHostname String   @map("session_hostname")
+  sessionUserName String   @map("session_user_name")
+  sessionStartedAt DateTime @map("session_started_at")
+}

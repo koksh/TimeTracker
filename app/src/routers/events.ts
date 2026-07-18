@@ -52,58 +52,36 @@ const eventRoutes: FastifyPluginAsync = async (app) => {
     },
   },
   async () => {
-    type EventRow = {
-      event: string;
-      timestamp: string;
-      elapsedMs: number;
-      activeTimeMs: number;
-      file_path: string | null;
-      file_language: string | null;
-      file_name: string | null;
-      workspace_folder: string | null;
-      session_hostname: string;
-      session_user_name: string;
-      session_started_at: string;
-    };
+    const events = await app.prisma.event.findMany({
+      orderBy: { id: 'desc' },
+    });
 
-    const result = await app.db.query<EventRow>(`
-      SELECT
-        event,
-        event_timestamp AS "timestamp",
-        elapsed_ms AS "elapsedMs",
-        active_time_ms AS "activeTimeMs",
-        file_path,
-        file_language,
-        file_name,
-        workspace_folder,
-        session_hostname,
-        session_user_name,
-        session_started_at
-      FROM events
-      ORDER BY id DESC
-    `);
-
-    const events = result.rows.map((row) => ({
-      event: row.event,
-      timestamp: row.timestamp,
-      elapsedMs: row.elapsedMs,
-      activeTimeMs: row.activeTimeMs,
-      file: row.file_path === null && row.file_language === null && row.file_name === null && row.workspace_folder === null
-        ? null
-        : {
-          path: row.file_path,
-          language: row.file_language,
-          fileName: row.file_name,
-          workspaceFolder: row.workspace_folder,
+    return {
+      count: events.length,
+      events: events.map((row) => ({
+        event: row.event,
+        timestamp: row.eventTimestamp.toISOString(),
+        elapsedMs: row.elapsedMs,
+        activeTimeMs: row.activeTimeMs,
+        file:
+          row.filePath === null &&
+          row.fileLanguage === null &&
+          row.fileName === null &&
+          row.workspaceFolder === null
+            ? null
+            : {
+                path: row.filePath,
+                language: row.fileLanguage,
+                fileName: row.fileName,
+                workspaceFolder: row.workspaceFolder,
+              },
+        session: {
+          hostname: row.sessionHostname,
+          user: row.sessionUserName,
+          startedAt: row.sessionStartedAt.toISOString(),
         },
-      session: {
-        hostname: row.session_hostname,
-        user: row.session_user_name,
-        startedAt: row.session_started_at,
-      },
-    }));
-
-    return { count: events.length, events };
+      })),
+    };
   });
 
   app.post<{
@@ -158,33 +136,21 @@ const eventRoutes: FastifyPluginAsync = async (app) => {
   },
   async (request, reply) => {
     const payload = request.body;
-    await app.db.query(`
-      INSERT INTO events (
-        event,
-        event_timestamp,
-        elapsed_ms,
-        active_time_ms,
-        file_path,
-        file_language,
-        file_name,
-        workspace_folder,
-        session_hostname,
-        session_user_name,
-        session_started_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-    `, [
-      payload.event,
-      payload.timestamp,
-      payload.elapsedMs,
-      payload.activeTimeMs,
-      payload.file?.path ?? null,
-      payload.file?.language ?? null,
-      payload.file?.fileName ?? null,
-      payload.file?.workspaceFolder ?? null,
-      payload.session.hostname,
-      payload.session.user,
-      payload.session.startedAt,
-    ]);
+    await app.prisma.event.create({
+      data: {
+        event: payload.event,
+        eventTimestamp: new Date(payload.timestamp),
+        elapsedMs: payload.elapsedMs,
+        activeTimeMs: payload.activeTimeMs,
+        filePath: payload.file?.path ?? null,
+        fileLanguage: payload.file?.language ?? null,
+        fileName: payload.file?.fileName ?? null,
+        workspaceFolder: payload.file?.workspaceFolder ?? null,
+        sessionHostname: payload.session.hostname,
+        sessionUserName: payload.session.user,
+        sessionStartedAt: new Date(payload.session.startedAt),
+      },
+    });
 
     reply.status(201);
     return { success: true, event: payload };
