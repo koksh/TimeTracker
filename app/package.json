@@ -19,7 +19,8 @@
     "@fastify/swagger": "^9.8.0",
     "@fastify/swagger-ui": "^6.1.0",
     "fastify-plugin": "^4.1.0",
-    "@prisma/client": "^5.0.0"
+    "@prisma/client": "^5.0.0",
+    "pg": "^8.11.0"
   },
   "devDependencies": {
     "@types/node": "^26.1.0",

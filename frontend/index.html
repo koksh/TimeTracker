@@ -5,31 +5,260 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Time Tracker Dashboard</title>
   <style>
-    body { font-family: Inter, system-ui, sans-serif; margin: 0; padding: 0; background: #f5f7fb; color: #141414; }
-    .page { max-width: 980px; margin: 0 auto; padding: 24px; }
-    h1, h2 { margin: 0 0 16px; }
-    .card { background: #fff; border-radius: 16px; box-shadow: 0 12px 40px rgba(17, 24, 39, 0.08); padding: 24px; margin-bottom: 20px; }
-    .stats { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-    .stat { padding: 18px; border-radius: 14px; background: #eef2ff; }
-    .stat strong { display: block; font-size: 32px; margin-bottom: 8px; }
-    .list { margin-top: 0; padding-left: 0; list-style: none; }
-    .list-item { padding: 14px 0; border-bottom: 1px solid #ebeef5; }
-    .list-item:last-child { border-bottom: none; }
-    .label { display: block; color: #6b7280; font-size: 14px; }
-    .button { border: none; border-radius: 999px; padding: 12px 18px; background: #312e81; color: #fff; cursor: pointer; transition: transform .18s ease, background .18s ease; }
-    .button:hover { transform: translateY(-1px); background: #4338ca; }
-    .chart-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-    .chart-box { background: #eef2ff; border-radius: 14px; padding: 16px; min-height: 180px; }
-    .chart-title { font-size: 16px; margin-bottom: 12px; }
-    .chart-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(15, 23, 42, 0.08); }
-    .chart-item:last-child { border-bottom: none; }
-    .chart-label { color: #374151; }
-    .chart-value { font-weight: 700; }
-    .error { color: #dc2626; margin-top: 12px; }
-    .footer { color: #6b7280; font-size: 14px; margin-top: 30px; }
-    .small-note { font-size: 14px; color: #4b5563; margin-top: 12px; }
-    .top-row { display: grid; gap: 20px; grid-template-columns: 1.2fr 0.8fr; }
-    .badge { display: inline-flex; align-items: center; gap: 8px; background: #eef2ff; border-radius: 999px; padding: 8px 14px; font-size: 14px; color: #3730a3; }
+    :root {
+      color-scheme: light;
+      font-family: Inter, system-ui, sans-serif;
+      background: #f5f7fb;
+      color: #111827;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #eef2ff 0%, #f7f9ff 100%);
+    }
+
+    .page {
+      width: min(1160px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 48px;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(2rem, 2.5vw, 2.75rem);
+      letter-spacing: -0.03em;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .top-panel,
+    .stats,
+    .board,
+    .charts {
+      display: grid;
+      gap: 18px;
+    }
+
+    .top-panel {
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr);
+      align-items: start;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.95rem;
+      color: #4b5563;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 1rem;
+      background: #f9fafb;
+      color: #111827;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      border-radius: 999px;
+      padding: 14px 22px;
+      background: #4338ca;
+      color: #ffffff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .16s ease, box-shadow .16s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(67, 56, 202, 0.18);
+    }
+
+    .stats {
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+
+    .stat {
+      border-radius: 20px;
+      background: linear-gradient(180deg, #eef2ff 0%, #ebf1ff 100%);
+      padding: 22px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 2rem;
+      margin-bottom: 8px;
+      color: #111827;
+    }
+
+    .label,
+    .message {
+      font-size: 0.94rem;
+      line-height: 1.5;
+    }
+
+    .message {
+      color: #dc2626;
+      margin-top: 12px;
+    }
+
+    .info-card {
+      display: grid;
+      gap: 14px;
+      padding: 20px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+    }
+
+    .info-card strong {
+      display: block;
+      font-size: 1.5rem;
+      margin-bottom: 6px;
+    }
+
+    .info-row {
+      display: grid;
+      gap: 12px;
+    }
+
+    .info-pill {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 14px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      padding: 14px 16px;
+      font-size: 0.95rem;
+    }
+
+    .board {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .user-list,
+    .list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .item-card {
+      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      padding: 18px;
+      margin-bottom: 14px;
+      transition: transform .16s ease;
+    }
+
+    .item-card:hover {
+      transform: translateY(-1px);
+    }
+
+    .item-card strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .charts {
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+
+    .chart-panel {
+      border-radius: 20px;
+      padding: 18px;
+      background: #eef2ff;
+      min-height: 240px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-panel h2 {
+      margin-bottom: 16px;
+      font-size: 1rem;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .bar-label {
+      font-size: 0.94rem;
+      color: #1f2937;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .bar-shell {
+      position: relative;
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(67, 56, 202, 0.16);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      position: absolute;
+      inset: 0;
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #4338ca, #7c3aed);
+    }
+
+    .chart-value {
+      font-weight: 700;
+      color: #111827;
+      white-space: nowrap;
+    }
+
+    .compact-list {
+      max-height: 330px;
+      overflow-y: auto;
+    }
+
+    .card h2 {
+      margin-bottom: 18px;
+      font-size: 1.1rem;
+    }
+
+    @media (max-width: 860px) {
+      .top-panel,
+      .board,
+      .charts {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -37,232 +266,257 @@
     <h1>Time Tracker Dashboard</h1>
 
     <div class="card">
-      <form id="settingsForm">
-        <div style="display:grid; gap:16px;">
-          <label>
-            API URL:
-            <input id="apiUrl" type="text" value="http://localhost:3000" style="width:100%; padding:10px; margin-top:8px; border:1px solid #d1d5db; border-radius:8px;" />
-          </label>
-
-          <label>
-            Пользователь:
-            <select id="userSelect" style="width:100%; padding:10px; margin-top:8px; border:1px solid #d1d5db; border-radius:8px;">
-              <option value="">Все пользователи</option>
-            </select>
-          </label>
-
-          <button class="button" type="submit">Загрузить статистику</button>
-          <div id="message" class="error"></div>
-        </div>
-      </form>
-    </div>
-
-    <div id="dashboard" style="display:none;">
-      <div class="stats">
-        <div class="stat"><strong id="totalUsers">0</strong><span>Пользователей</span></div>
-        <div class="stat"><strong id="totalEvents">0</strong><span>Всего событий</span></div>
-        <div class="stat"><strong id="totalMinutes">0</strong><span>Всего минут</span></div>
-        <div class="stat"><strong id="userEventCount">0</strong><span>Событий выбранного пользователя</span></div>
-      </div>
-
-      <div class="card top-row">
+      <div class="top-panel">
         <div>
-          <h2>Фильтр по пользователю</h2>
-          <p id="selectedUserInfo">Показывается статистика по всем пользователям.</p>
-          <p class="small-note">Фильтрация по пользователю работает для событий из `/events`. Временные записи `/time` пока показываются как общий список.</p>
+          <div class="field">
+            <label for="apiUrl">API URL</label>
+            <input id="apiUrl" type="text" value="http://localhost:3000" />
+          </div>
+          <div class="field">
+            <label for="userSelect">Пользователь</label>
+            <select id="userSelect"><option value="">Все пользователи</option></select>
+          </div>
+          <button class="button" type="button" id="refreshButton">Обновить</button>
+          <div class="message" id="message"></div>
         </div>
-        <div style="display:flex; align-items:center; justify-content:center; gap:12px; background:#eef2ff; border-radius:14px; padding:20px;">
-          <span class="badge">Пользователей в API: <strong id="userCountBadge">0</strong></span>
-          <span class="badge">Уникальных пользователей в событиях: <strong id="uniqueEventUsers">0</strong></span>
-        </div>
-      </div>
 
-      <div class="card chart-grid">
-        <div class="chart-box">
-          <h2 class="chart-title">Топ языков</h2>
-          <div id="languageChart"></div>
+        <div class="info-card">
+          <strong id="activeStatus">Ожидание данных</strong>
+          <div class="label" id="latestActivity">Здесь появится последнее событие.</div>
+          <div class="info-row">
+            <div class="info-pill"><span>Активное время</span><strong id="activeMinutes">0 мин</strong></div>
+            <div class="info-pill"><span>Фильтр</span><strong id="filterInfo">Все пользователи</strong></div>
+          </div>
         </div>
-        <div class="chart-box">
-          <h2 class="chart-title">Топ файлов</h2>
-          <div id="fileChart"></div>
-        </div>
-        <div class="chart-box">
-          <h2 class="chart-title">Топ пользователей</h2>
-          <div id="userChart"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Последние события</h2>
-        <ul id="eventList" class="list"></ul>
-      </div>
-
-      <div class="card">
-        <h2>Временные записи</h2>
-        <ul id="timeList" class="list"></ul>
       </div>
     </div>
 
-    <div class="footer">
-      Это статический интерфейс для просмотра статистики из бэкенда. Если нужно, могу сделать отдельный экран с графиками по дням и по юзерам.
+    <div class="card stats">
+      <div class="stat"><strong id="totalUsers">0</strong><span>Пользователей</span></div>
+      <div class="stat"><strong id="totalEvents">0</strong><span>Событий</span></div>
+      <div class="stat"><strong id="totalMinutes">0</strong><span>Минут всего</span></div>
+      <div class="stat"><strong id="activeUserCount">0</strong><span>Активных пользователей</span></div>
+    </div>
+
+    <div class="board">
+      <div class="card">
+        <h2>Пользователи</h2>
+        <ul id="userList" class="user-list"></ul>
+      </div>
+
+      <div class="card">
+        <h2>Графики</h2>
+        <div class="charts">
+          <div class="chart-panel">
+            <h2>Пользователи</h2>
+            <div id="userChart"></div>
+          </div>
+          <div class="chart-panel">
+            <h2>Языки</h2>
+            <div id="languageChart"></div>
+          </div>
+          <div class="chart-panel">
+            <h2>Файлы</h2>
+            <div id="fileChart"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Последние события</h2>
+      <ul id="eventList" class="list compact-list"></ul>
+    </div>
+
+    <div class="card">
+      <h2>Временные записи</h2>
+      <ul id="timeList" class="list compact-list"></ul>
     </div>
   </div>
 
   <script>
-    const form = document.getElementById('settingsForm');
     const apiUrlInput = document.getElementById('apiUrl');
     const userSelect = document.getElementById('userSelect');
+    const refreshButton = document.getElementById('refreshButton');
     const message = document.getElementById('message');
-    const dashboard = document.getElementById('dashboard');
     const totalUsers = document.getElementById('totalUsers');
     const totalEvents = document.getElementById('totalEvents');
     const totalMinutes = document.getElementById('totalMinutes');
-    const userEventCount = document.getElementById('userEventCount');
-    const selectedUserInfo = document.getElementById('selectedUserInfo');
+    const activeUserCount = document.getElementById('activeUserCount');
+    const activeStatus = document.getElementById('activeStatus');
+    const latestActivity = document.getElementById('latestActivity');
+    const activeMinutes = document.getElementById('activeMinutes');
+    const filterInfo = document.getElementById('filterInfo');
+    const userList = document.getElementById('userList');
     const eventList = document.getElementById('eventList');
     const timeList = document.getElementById('timeList');
+    const userChart = document.getElementById('userChart');
     const languageChart = document.getElementById('languageChart');
     const fileChart = document.getElementById('fileChart');
-    const userChart = document.getElementById('userChart');
-    const userCountBadge = document.getElementById('userCountBadge');
-    const uniqueEventUsers = document.getElementById('uniqueEventUsers');
 
-    let cache = {
+    const state = {
+      baseUrl: apiUrlInput.value.trim().replace(/\/$/, ''),
       users: [],
       events: [],
       time: null,
+      selectedUser: '',
+      refreshTimer: null,
     };
 
     const setMessage = (text) => {
       message.textContent = text || '';
     };
 
-    const renderList = (container, items, formatItem) => {
-      container.innerHTML = items.length ? items.map(formatItem).join('') : '<li class="list-item">Нет данных</li>';
-    };
-
-    const formatEvent = (event) => `
-      <li class="list-item">
-        <span class="label">${new Date(event.timestamp).toLocaleString()}</span>
-        <strong>${event.event}</strong>
-        <div class="label">Пользователь: ${event.session?.user ?? '—'}</div>
-        <div class="label">Хост: ${event.session?.hostname ?? '—'}</div>
-        <div class="label">Файл: ${event.file?.fileName ?? '—'} (${event.file?.language ?? '—'})</div>
-        <div class="label">Путь: ${event.file?.path ?? '—'}</div>
-      </li>
-    `;
-
-    const formatTime = (record) => `
-      <li class="list-item">
-        <span class="label">${new Date(record.date).toLocaleString()}</span>
-        <strong>${record.minutes} мин</strong>
-        <div class="label">${record.note ?? 'Без заметки'}</div>
-      </li>
-    `;
-
-    const renderChart = (container, data) => {
-      container.innerHTML = data.length
-        ? data.map((item) => `
-          <div class="chart-item">
-            <span class="chart-label">${item.label}</span>
-            <span class="chart-value">${item.value}</span>
-          </div>
-        `).join('')
-        : '<div class="chart-item">Нет данных</div>';
-    };
-
-    const fetchApi = async (baseUrl, path) => {
-      const response = await fetch(`${baseUrl}${path}`);
+    const safeFetch = async (path) => {
+      const response = await fetch(`${state.baseUrl}${path}`);
       if (!response.ok) {
-        throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
+        throw new Error(`Ошибка ${response.status} на ${path}`);
       }
       return response.json();
     };
 
-    const filterEventsByUser = (events, username) => {
-      if (!username) return events;
-      const target = username.trim().toLowerCase();
-      return events.filter((event) => String(event.session?.user ?? '').toLowerCase() === target);
+    const normalize = (value) => value == null || value === '' ? 'Неизвестно' : String(value);
+
+    const renderBarChart = (container, data) => {
+      if (!data.length) {
+        container.innerHTML = '<div class="label">Нет данных</div>';
+        return;
+      }
+
+      const max = Math.max(...data.map((item) => item.value));
+      container.innerHTML = data.map((item) => {
+        const width = max ? Math.max(10, Math.round((item.value / max) * 100)) : 10;
+        return `
+          <div class="bar-row">
+            <div class="bar-label" title="${item.label}">${item.label}</div>
+            <div style="display:flex; align-items:center; gap:10px; width:100%;">
+              <div class="bar-shell"><div class="bar-fill" style="width:${width}%"></div></div>
+              <div class="chart-value">${item.value}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
     };
 
-    const buildChartData = (items) => {
-      const counts = {};
-      items.forEach((item) => {
-        counts[item] = (counts[item] || 0) + 1;
-      });
-      return Object.entries(counts)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 8)
-        .map(([label, value]) => ({ label, value }));
+    const renderItems = (container, items, template) => {
+      container.innerHTML = items.length ? items.map(template).join('') : '<li class="item-card"><span class="label">Нет данных</span></li>';
     };
 
-    const renderUserOptions = (users) => {
-      const options = ['<option value="">Все пользователи</option>', ...users.map((user) => `<option value="${user.username}">${user.username}</option>`)];
-      userSelect.innerHTML = options.join('');
+    const formatUser = (user) => `
+      <li class="item-card">
+        <strong>${normalize(user.username)}</strong>
+        <span class="label">ID: ${normalize(user.id)}</span>
+      </li>
+    `;
+
+    const formatEvent = (event) => `
+      <li class="item-card">
+        <strong>${normalize(event.event)}</strong>
+        <span class="label">${new Date(event.timestamp).toLocaleString()}</span>
+        <span class="label">Пользователь: ${normalize(event.session?.user)}</span>
+        <span class="label">Файл: ${normalize(event.file?.fileName || event.file?.path)}</span>
+      </li>
+    `;
+
+    const formatTime = (record) => `
+      <li class="item-card">
+        <strong>${normalize(record.minutes)} мин</strong>
+        <span class="label">${new Date(record.date).toLocaleString()}</span>
+        <span class="label">Заметка: ${normalize(record.note)}</span>
+        <span class="label">User ID: ${normalize(record.userId)}</span>
+      </li>
+    `;
+
+    const countGroup = (records, selector) => {
+      return records.reduce((acc, record) => {
+        const key = normalize(selector(record));
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {});
     };
 
-    const renderDashboard = () => {
-      const selectedUser = userSelect.value;
-      const events = cache.events;
-      const timeData = cache.time;
-      const filteredEvents = filterEventsByUser(events, selectedUser);
-      const uniqueUsers = Array.from(new Set(events.map((item) => item.session?.user).filter(Boolean)));
+    const chartData = (counts) => Object.entries(counts)
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
 
-      totalUsers.textContent = cache.users.length;
+    const currentEvents = () => {
+      if (!state.selectedUser) return state.events;
+      const selected = state.selectedUser.toLowerCase();
+      return state.events.filter((event) => (event.session?.user || '').toLowerCase() === selected);
+    };
+
+    const updateUI = () => {
+      const events = currentEvents();
+      const users = state.users;
+      const minutes = state.time?.totalMinutes || 0;
+      const activeUsers = new Set(events.map((event) => event.session?.user).filter(Boolean));
+
+      totalUsers.textContent = users.length;
       totalEvents.textContent = events.length;
-      totalMinutes.textContent = timeData?.totalMinutes ?? 0;
-      userEventCount.textContent = filteredEvents.length;
-      userCountBadge.textContent = cache.users.length;
-      uniqueEventUsers.textContent = uniqueUsers.length;
-      selectedUserInfo.textContent = selectedUser
-        ? `Фильтр установлен: ${selectedUser}`
-        : 'Показывается статистика по всем пользователям.';
+      totalMinutes.textContent = minutes;
+      activeUserCount.textContent = activeUsers.size;
+      filterInfo.textContent = state.selectedUser ? `Выбрано: ${state.selectedUser}` : 'Все пользователи';
 
-      renderList(eventList, filteredEvents.slice(0, 12), formatEvent);
-      renderList(timeList, (timeData?.records ?? []).slice(0, 12), formatTime);
-      renderChart(languageChart, buildChartData(filteredEvents.map((event) => event.file?.language ?? 'Неизвестно')));
-      renderChart(fileChart, buildChartData(filteredEvents.map((event) => event.file?.fileName ?? 'Неизвестно')));
-      renderChart(userChart, buildChartData(filteredEvents.map((event) => event.session?.user ?? 'Неизвестно')));
+      renderItems(userList, users, formatUser);
+      renderItems(eventList, events.slice(0, 12), formatEvent);
+      renderItems(timeList, (state.time?.records || []).slice(0, 12), formatTime);
 
-      dashboard.style.display = 'block';
+      renderBarChart(userChart, chartData(countGroup(events, (event) => event.session?.user)));
+      renderBarChart(languageChart, chartData(countGroup(events, (event) => event.file?.language)));
+      renderBarChart(fileChart, chartData(countGroup(events, (event) => event.file?.fileName || event.file?.path)));
+
+      const lastEvent = events[0];
+      if (lastEvent) {
+        activeStatus.textContent = lastEvent.session?.user ? `Пишет ${lastEvent.session.user}` : 'Последнее событие';
+        latestActivity.textContent = `${normalize(lastEvent.event)} · ${normalize(lastEvent.file?.fileName || lastEvent.file?.path)}`;
+        const activeSum = Math.round(events.slice(0, 8).reduce((sum, item) => sum + (item.activeTimeMs || 0), 0) / 60000);
+        activeMinutes.textContent = `${activeSum} мин`;
+      } else {
+        activeStatus.textContent = 'Нет событий';
+        latestActivity.textContent = 'Отсутствуют события для текущего фильтра';
+        activeMinutes.textContent = '0 мин';
+      }
+    };
+
+    const populateUserSelect = () => {
+      userSelect.innerHTML = `<option value="">Все пользователи</option>${state.users.map((user) => `<option value="${user.username}">${user.username}</option>`).join('')}`;
+      userSelect.value = state.selectedUser;
     };
 
     const loadData = async () => {
-      const apiUrl = apiUrlInput.value.trim().replace(/\/$/, '');
-      setMessage('Загружаем данные...');
-      dashboard.style.display = 'none';
+      state.baseUrl = apiUrlInput.value.trim().replace(/\/$/, '') || 'http://localhost:3000';
+      setMessage('Загружаю данные...');
+      refreshButton.disabled = true;
 
-      const [timeData, eventData, users] = await Promise.all([
-        fetchApi(apiUrl, '/time'),
-        fetchApi(apiUrl, '/events'),
-        fetchApi(apiUrl, '/users'),
-      ]);
+      try {
+        const [time, events, users] = await Promise.all([
+          safeFetch('/time'),
+          safeFetch('/events'),
+          safeFetch('/users'),
+        ]);
 
-      cache = {
-        users,
-        events: eventData.events ?? [],
-        time: timeData,
-      };
+        state.time = time;
+        state.events = events.events || [];
+        state.users = users || [];
 
-      renderUserOptions(users);
-      renderDashboard();
-      setMessage('');
+        populateUserSelect();
+        updateUI();
+        setMessage('');
+      } catch (err) {
+        setMessage(err.message || 'Не удалось загрузить данные');
+      } finally {
+        refreshButton.disabled = false;
+      }
     };
 
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      try {
-        await loadData();
-      } catch (error) {
-        setMessage(error.message || 'Не удалось загрузить данные');
-      }
+    refreshButton.addEventListener('click', loadData);
+    userSelect.addEventListener('change', () => {
+      state.selectedUser = userSelect.value;
+      updateUI();
     });
 
-    userSelect.addEventListener('change', () => {
-      if (cache.time) {
-        renderDashboard();
-      }
-    });
+    loadData();
   </script>
 </body>
 </html>

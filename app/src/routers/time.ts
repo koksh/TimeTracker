@@ -42,7 +42,7 @@ const timeRoutes: FastifyPluginAsync = async (app) => {
         orderBy: { id: 'desc' },
       });
 
-      const totalMinutes = records.reduce((sum, record) => sum + record.minutes, 0);
+      const totalMinutes = records.reduce((sum: number, record) => sum + record.minutes, 0);
       return { totalMinutes, records };
     },
   );

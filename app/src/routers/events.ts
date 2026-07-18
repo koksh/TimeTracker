@@ -1,12 +1,21 @@
 import type { FastifyPluginAsync } from 'fastify';
+import type { Prisma } from '@prisma/client';
 import type { TrackingEvent } from '../types.js';
 
 const eventRoutes: FastifyPluginAsync = async (app) => {
-  app.get('/',
+  app.get<{
+    Querystring: { user?: string };
+  }>('/',
   {
     schema: {
       description: 'List stored events',
       tags: ['events'],
+      querystring: {
+        type: 'object',
+        properties: {
+          user: { type: 'string' },
+        },
+      },
       response: {
         200: {
           type: 'object',
@@ -51,14 +60,20 @@ const eventRoutes: FastifyPluginAsync = async (app) => {
       },
     },
   },
-  async () => {
-    const events = await app.prisma.event.findMany({
-      orderBy: { id: 'desc' },
-    });
+  async (request) => {
+    const userName = request.query.user?.trim();
+    const events = userName
+      ? await app.prisma.event.findMany({
+          where: { sessionUserName: { equals: userName, mode: 'insensitive' } },
+          orderBy: { id: 'desc' },
+        })
+      : await app.prisma.event.findMany({
+          orderBy: { id: 'desc' },
+        });
 
     return {
       count: events.length,
-      events: events.map((row) => ({
+      events: events.map((row: { [key: string]: any }) => ({
         event: row.event,
         timestamp: row.eventTimestamp.toISOString(),
         elapsedMs: row.elapsedMs,
