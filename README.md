@@ -26,3 +26,4 @@ docker compose up --build
 ```bash
 dockerc ompose down
 ```
+# ПРОЕКТ НЕ БЫЛ ЗАКОНЧЕН. 
